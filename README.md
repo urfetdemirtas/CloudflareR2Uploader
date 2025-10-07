@@ -14,9 +14,11 @@
 </div>
 
 ---
-
+<div align="center">
 <img src="./r2-upload-1.jpeg?raw=true" alt="Cloudflare R2 Upload" width="709" height="615">
 <img src="./r2-upload-2.jpeg?raw=true" alt="Cloudflare R2 Upload" width="709" height="615">
+</div>
+
 # English
 
 
