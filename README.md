@@ -13,11 +13,7 @@
 
 </div>
 
-<<<<<<< HEAD
---- 
-=======
----
->>>>>>> e3a6d910fdab31c3ae3fd989caef36d7e092da9d
+ --
 <div align="center">
 <img src="./r2-upload-1.jpeg?raw=true" alt="Cloudflare R2 Upload" width="709" height="615">
 <img src="./r2-upload-2.jpeg?raw=true" alt="Cloudflare R2 Upload" width="709" height="615">
