@@ -7,7 +7,9 @@ function FileManager({
   folders, 
   loading,
   uploadProgress,
+  loadingMessage,
   selectedItems,
+  searchQuery,
   onUpload, 
   onFolderClick, 
   onRename, 
@@ -79,6 +81,11 @@ function FileManager({
                 {uploadProgress.loaded} MB / {uploadProgress.totalSize} MB
               </div>
             </div>
+          ) : loadingMessage ? (
+            <div className="loading-message">
+              <div className="spinner"></div>
+              <p>{loadingMessage}</p>
+            </div>
           ) : (
             <div className="spinner"></div>
           )}
@@ -86,9 +93,14 @@ function FileManager({
       )}
 
       <div className="file-list">
+        {searchQuery && allItems.length > 0 && (
+          <div className="search-results-info">
+            Found {allItems.length} item{allItems.length !== 1 ? 's' : ''} matching "{searchQuery}"
+          </div>
+        )}
         {allItems.length === 0 && !loading && (
           <div className="empty-state">
-            <p>No files or folders</p>
+            <p>{searchQuery ? `No results found for "${searchQuery}"` : 'No files or folders'}</p>
           </div>
         )}
         {allItems.map((item) => (

@@ -88,11 +88,40 @@ app.get('/api/files', async (req, res) => {
 
     const response = await s3Client.send(command);
     
-    const folders = (response.CommonPrefixes || []).map(p => ({
-      name: p.Prefix.slice(prefix.length, -1),
-      type: 'folder',
-      fullPath: p.Prefix,
-    }));
+    // Klasör içindeki dosya sayısını hesapla
+    const countFilesInFolder = async (folderPrefix) => {
+      let count = 0;
+      let continuationToken = null;
+      
+      do {
+        const listCommand = new ListObjectsV2Command({
+          Bucket: BUCKET_NAME,
+          Prefix: folderPrefix,
+          ContinuationToken: continuationToken,
+        });
+        
+        const listResponse = await s3Client.send(listCommand);
+        const contents = listResponse.Contents || [];
+        
+        // Sadece dosyaları say (klasör işaretçilerini sayma)
+        count += contents.filter(item => !item.Key.endsWith('/')).length;
+        continuationToken = listResponse.NextContinuationToken;
+      } while (continuationToken);
+      
+      return count;
+    };
+    
+    const folders = await Promise.all(
+      (response.CommonPrefixes || []).map(async (p) => {
+        const fileCount = await countFilesInFolder(p.Prefix);
+        return {
+          name: p.Prefix.slice(prefix.length, -1),
+          type: 'folder',
+          fullPath: p.Prefix,
+          fileCount: fileCount,
+        };
+      })
+    );
 
     const files = (response.Contents || [])
       .filter(item => item.Key !== prefix && !item.Key.endsWith('/'))
@@ -132,17 +161,17 @@ app.post('/api/upload', (req, res) => {
   const bb = busboy({ 
     headers: req.headers,
     limits: {
-      fileSize: 15 * 1024 * 1024 * 1024, // 15GB limit
+      fileSize: 30 * 1024 * 1024 * 1024, // 30GB limit
     }
   });
   
   const uploadedFiles = [];
-  let prefix = '';
+  const fields = {};
   let filesProcessing = 0;
   let hasError = false;
 
   bb.on('field', (fieldname, val) => {
-    fieldname === 'prefix' && (prefix = val);
+    fields[fieldname] = val;
   });
 
   bb.on('file', async (fieldname, fileStream, info) => {
@@ -150,9 +179,11 @@ app.post('/api/upload', (req, res) => {
     
     const { filename, mimeType } = info;
     const sanitizedName = sanitizeFileName(filename);
+    const prefix = fields.prefix || '';
     const key = prefix + sanitizedName;
     
     console.log(`\n📤 Upload started: ${sanitizedName}`);
+    console.log(`  ➤ Target path: ${key}`);
     console.log(`  ➤ Direct streaming to R2 (no temp file)`);
 
     try {
@@ -347,6 +378,69 @@ app.delete('/api/delete-multiple', async (req, res) => {
   }
 });
 
+app.post('/api/move-multiple', async (req, res) => {
+  try {
+    const { items, targetPath } = req.body;
+    
+    console.log(`\n📦 Moving ${items.length} item(s) to: "${targetPath}"`);
+    
+    for (const item of items) {
+      const fileName = item.path.split('/').filter(Boolean).pop();
+      const newPath = item.isFolder 
+        ? `${targetPath}${fileName}/`
+        : `${targetPath}${fileName}`;
+      
+      console.log(`  ➤ ${item.path} → ${newPath}`);
+      
+      const moveOperation = item.isFolder
+        ? async () => {
+            const listCommand = new ListObjectsV2Command({
+              Bucket: BUCKET_NAME,
+              Prefix: item.path,
+            });
+            const listResponse = await s3Client.send(listCommand);
+            const contents = listResponse.Contents || [];
+            
+            for (const obj of contents) {
+              const relativePath = obj.Key.replace(item.path, '');
+              const destKey = `${newPath}${relativePath}`;
+              
+              await s3Client.send(new CopyObjectCommand({
+                Bucket: BUCKET_NAME,
+                CopySource: `${BUCKET_NAME}/${obj.Key}`,
+                Key: destKey,
+              }));
+              
+              await s3Client.send(new DeleteObjectCommand({
+                Bucket: BUCKET_NAME,
+                Key: obj.Key,
+              }));
+            }
+          }
+        : async () => {
+            await s3Client.send(new CopyObjectCommand({
+              Bucket: BUCKET_NAME,
+              CopySource: `${BUCKET_NAME}/${item.path}`,
+              Key: newPath,
+            }));
+            
+            await s3Client.send(new DeleteObjectCommand({
+              Bucket: BUCKET_NAME,
+              Key: item.path,
+            }));
+          };
+      
+      await moveOperation();
+    }
+    
+    console.log(`  ✅ Moved ${items.length} item(s) successfully\n`);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error moving items:', error);
+    res.status(500).json({ error: 'Failed to move items' });
+  }
+});
+
 // Health check endpoint
 app.get('/api/health', async (req, res) => {
   try {
@@ -370,7 +464,8 @@ const PORT = process.env.PORT || 3001;
 const server = app.listen(PORT, async () => {
   console.log(`\n✅ Server running on http://localhost:${PORT}`);
   console.log('📱 Frontend: http://localhost:3000\n');
-  console.log('📦 Max file size: 15GB');
+  console.log('📦 Max file size: 30GB');
+  console.log('⏱️  Timeout: 1 hour');
   console.log('💾 Upload method: Direct streaming to R2 (zero disk I/O)\n');
   
   // Test R2 connection
@@ -393,4 +488,4 @@ const server = app.listen(PORT, async () => {
 });
 
 // Timeout'u artır (büyük dosyalar için)
-server.timeout = 30 * 60 * 1000; // 30 dakika
+server.timeout = 60 * 60 * 1000; // 1 saat

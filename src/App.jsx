@@ -13,6 +13,8 @@ function App() {
   const [selectedItems, setSelectedItems] = useState(new Set());
   const [modal, setModal] = useState(null);
   const [uploadProgress, setUploadProgress] = useState(null);
+  const [loadingMessage, setLoadingMessage] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
 
   const loadFiles = useCallback(async () => {
     setLoading(true);
@@ -188,6 +190,79 @@ function App() {
     });
   };
 
+  const handleMoveMultiple = async () => {
+    const itemsToMove = [...selectedItems].map(path => {
+      const item = [...folders, ...files].find(i => i.fullPath === path);
+      return {
+        path,
+        isFolder: item?.type === 'folder',
+        name: item?.name,
+      };
+    });
+
+    // Tüm klasörleri listele (tüm derinliklerde)
+    const getAllFolders = async () => {
+      const allFolders = [];
+      
+      // Root klasörleri ekle
+      allFolders.push(...folders);
+      
+      // Recursive olarak alt klasörleri bul
+      const fetchSubfolders = async (prefix) => {
+        try {
+          const data = await api.listFiles(prefix);
+          return data.folders || [];
+        } catch {
+          return [];
+        }
+      };
+      
+      for (const folder of folders) {
+        const subfolders = await fetchSubfolders(folder.fullPath);
+        allFolders.push(...subfolders);
+      }
+      
+      return allFolders;
+    };
+
+    setLoading(true);
+    setLoadingMessage('Loading folders...');
+    const allFolders = await getAllFolders();
+    setLoading(false);
+    setLoadingMessage('');
+
+    setModal({
+      type: 'folder-picker',
+      title: 'Move Items',
+      message: `Select destination folder for ${itemsToMove.length} item${itemsToMove.length > 1 ? 's' : ''}:`,
+      folders: allFolders,
+      currentPath,
+      onConfirm: async (targetPath) => {
+        setModal(null); // Modal'ı kapat
+        setLoading(true);
+        setLoadingMessage(`Moving ${itemsToMove.length} item${itemsToMove.length > 1 ? 's' : ''}...`);
+        try {
+          await api.moveMultiple(itemsToMove, targetPath);
+          await loadFiles();
+          setModal({
+            type: 'success',
+            title: 'Success',
+            message: `${itemsToMove.length} item${itemsToMove.length > 1 ? 's' : ''} moved successfully.`,
+          });
+        } catch (error) {
+          setModal({
+            type: 'error',
+            title: 'Error',
+            message: 'Failed to move items.',
+          });
+        } finally {
+          setLoading(false);
+          setLoadingMessage('');
+        }
+      },
+    });
+  };
+
   const handleNavigate = (folderPath) => {
     setCurrentPath(folderPath);
   };
@@ -200,6 +275,19 @@ function App() {
     });
   };
 
+  const handleSearch = (query) => {
+    setSearchQuery(query);
+  };
+
+  // Arama filtresi
+  const filteredFiles = searchQuery
+    ? files.filter(file => file.name.toLowerCase().includes(searchQuery.toLowerCase()))
+    : files;
+
+  const filteredFolders = searchQuery
+    ? folders.filter(folder => folder.name.toLowerCase().includes(searchQuery.toLowerCase()))
+    : folders;
+
   return (
     <div className="app">
       <Header 
@@ -207,14 +295,18 @@ function App() {
         onNavigate={handleNavigate}
         onCreateFolder={handleCreateFolder}
         onDeleteMultiple={selectedItems.size > 0 ? handleDeleteMultiple : null}
+        onMoveMultiple={selectedItems.size > 0 ? handleMoveMultiple : null}
         selectedCount={selectedItems.size}
+        onSearch={handleSearch}
       />
       <FileManager
-        files={files}
-        folders={folders}
+        files={filteredFiles}
+        folders={filteredFolders}
         loading={loading}
         selectedItems={selectedItems}
         uploadProgress={uploadProgress}
+        loadingMessage={loadingMessage}
+        searchQuery={searchQuery}
         onUpload={handleUpload}
         onFolderClick={handleNavigate}
         onRename={handleRename}
@@ -227,6 +319,8 @@ function App() {
           title={modal.title}
           message={modal.message}
           inputValue={modal.inputValue}
+          folders={modal.folders}
+          currentPath={modal.currentPath}
           onConfirm={modal.onConfirm}
           onClose={() => setModal(null)}
         />

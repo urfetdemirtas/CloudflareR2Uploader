@@ -11,10 +11,11 @@ const api = {
   },
 
   async uploadFiles(files, prefix = '', onProgress) {
+    console.log(`📤 Uploading to path: "${prefix}"`);
     return new Promise((resolve, reject) => {
       const formData = new FormData();
-      files.forEach((file) => formData.append('files', file));
       formData.append('prefix', prefix);
+      files.forEach((file) => formData.append('files', file));
 
       const xhr = new XMLHttpRequest();
 
@@ -57,11 +58,11 @@ const api = {
       });
 
       xhr.addEventListener('timeout', () => {
-        reject(new Error('Upload timeout - file too large or slow connection'));
+        reject(new Error('Upload timeout (max 1 hour) - file too large or slow connection'));
       });
 
       xhr.open('POST', `${API_BASE}/upload`);
-      xhr.timeout = 30 * 60 * 1000; // 30 dakika timeout
+      xhr.timeout = 60 * 60 * 1000; // 1 saat timeout
       xhr.send(formData);
     });
   },
@@ -119,6 +120,20 @@ const api = {
     
     return hasError
       ? Promise.reject(new Error('Failed to delete items'))
+      : response.json();
+  },
+
+  async moveMultiple(items, targetPath) {
+    const response = await fetch(`${API_BASE}/move-multiple`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ items, targetPath }),
+    });
+
+    const hasError = !response.ok;
+    
+    return hasError
+      ? Promise.reject(new Error('Failed to move items'))
       : response.json();
   },
 };

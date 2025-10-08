@@ -42,6 +42,7 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 1.5rem;
   margin-bottom: 1rem;
 }
 
@@ -49,6 +50,71 @@ body {
   font-size: 1.5rem;
   font-weight: 600;
   color: var(--color-primary);
+  white-space: nowrap;
+}
+
+.header-search {
+  flex: 1;
+  max-width: 500px;
+}
+
+.search-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-icon {
+  position: absolute;
+  left: 0.75rem;
+  width: 18px;
+  height: 18px;
+  stroke: var(--color-text-light);
+  pointer-events: none;
+}
+
+.search-input {
+  width: 100%;
+  padding: 0.5rem 2.5rem 0.5rem 2.5rem;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  font-size: 0.875rem;
+  background: var(--color-surface);
+  color: var(--color-text);
+  transition: border-color 0.2s;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.search-input::placeholder {
+  color: var(--color-text-light);
+}
+
+.search-clear {
+  position: absolute;
+  right: 0.5rem;
+  padding: 0.25rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.search-clear:hover {
+  background: var(--color-hover);
+}
+
+.search-clear svg {
+  width: 16px;
+  height: 16px;
+  stroke: var(--color-text-light);
 }
 
 .header-actions {
@@ -170,6 +236,14 @@ body {
   overflow: hidden;
 }
 
+.search-results-info {
+  padding: 0.75rem 1rem;
+  background: var(--color-hover);
+  font-size: 0.875rem;
+  color: var(--color-text-light);
+  border-bottom: 1px solid var(--color-border);
+}
+
 .file-item {
   display: flex;
   justify-content: space-between;
@@ -215,6 +289,19 @@ body {
   width: 100%;
   height: 100%;
 }
+
+/* Dosya tipi renkleri - minimalist */
+.file-icon[data-type="folder"] svg { stroke: #424242; }
+.file-icon[data-type="image"] svg { stroke: #5e35b1; }
+.file-icon[data-type="video"] svg { stroke: #1976d2; }
+.file-icon[data-type="audio"] svg { stroke: #00897b; }
+.file-icon[data-type="archive"] svg { stroke: #f57c00; }
+.file-icon[data-type="pdf"] svg { stroke: #d32f2f; }
+.file-icon[data-type="excel"] svg { stroke: #388e3c; }
+.file-icon[data-type="word"] svg { stroke: #1976d2; }
+.file-icon[data-type="ppt"] svg { stroke: #e64a19; }
+.file-icon[data-type="code"] svg { stroke: #512da8; }
+.file-icon[data-type="text"] svg { stroke: #616161; }
 
 .file-info {
   flex: 1;
@@ -477,6 +564,11 @@ body {
     align-items: flex-start;
   }
 
+  .header-search {
+    width: 100%;
+    max-width: none;
+  }
+
   .header-actions {
     width: 100%;
   }
@@ -499,4 +591,63 @@ body {
     width: 100%;
     justify-content: flex-end;
   }
+}
+
+/* Loading Message */
+.loading-message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.loading-message p {
+  color: var(--color-text);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+/* Folder Picker */
+.folder-picker {
+  max-height: 300px;
+  overflow-y: auto;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  margin-top: 0.75rem;
+}
+
+.folder-option {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.folder-option:last-child {
+  border-bottom: none;
+}
+
+.folder-option:hover {
+  background: var(--color-hover);
+}
+
+.folder-option.selected {
+  background: var(--color-selected);
+}
+
+.folder-icon {
+  width: 20px;
+  height: 20px;
+  stroke-width: 2;
+  flex-shrink: 0;
+}
+
+.no-folders {
+  padding: 2rem;
+  text-align: center;
+  color: var(--color-text-light);
+  font-size: 0.875rem;
 }
