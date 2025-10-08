@@ -1,6 +1,6 @@
 {
   "name": "cloudflare-r2-file-manager",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "Modern web-based file manager for Cloudflare R2 storage",
   "type": "module",
   "scripts": {
