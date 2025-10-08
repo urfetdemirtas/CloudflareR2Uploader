@@ -15,8 +15,10 @@
 
  --
 <div align="center">
-<img src="./r2-upload-1.jpeg?raw=true" alt="Cloudflare R2 Upload" width="709" height="615">
-<img src="./r2-upload-2.jpeg?raw=true" alt="Cloudflare R2 Upload" width="709" height="615">
+<img src="./r2-01.png?raw=true" alt="Cloudflare R2 Upload" width="709">
+<img src="./r2-03.png?raw=true" alt="Cloudflare R2 Upload" width="709">
+<img src="./r2-03.png?raw=true" alt="Cloudflare R2 Upload" width="709">
+<img src="./r2-04.png?raw=true" alt="Cloudflare R2 Upload" width="709">
 </div>
 
 # English
