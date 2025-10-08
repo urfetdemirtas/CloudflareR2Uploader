@@ -14,11 +14,11 @@
 </div>
 
  --
-<div align="center">
+<div align="center"> 
 <img src="./r2-01.png?raw=true" alt="Cloudflare R2 Upload" width="709">
 <img src="./r2-03.png?raw=true" alt="Cloudflare R2 Upload" width="709">
 <img src="./r2-03.png?raw=true" alt="Cloudflare R2 Upload" width="709">
-<img src="./r2-04.png?raw=true" alt="Cloudflare R2 Upload" width="709">
+<img src="./r2-04.png?raw=true" alt="Cloudflare R2 Upload" width="709"> 
 </div>
 
 # English
